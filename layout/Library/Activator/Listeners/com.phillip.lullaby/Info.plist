@@ -1,0 +1,5 @@
+{
+	title = "Lullaby";
+    description = "Stop your music after you've fallen asleep";
+    "compatible-modes" = ("springboard", "application", "lockscreen");
+}

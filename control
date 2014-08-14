@@ -1,0 +1,9 @@
+Package: com.phillip.lullaby
+Name: Lullaby
+Depends: mobilesubstrate, libactivator
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Stop your music after you've fallen asleep
+Maintainer: Phillip Tennen
+Author: Phillip Tennen
+Section: Tweaks
