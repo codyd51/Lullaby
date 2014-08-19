@@ -1,53 +1,78 @@
 #import "libactivator.h"
 @class SBMediaController;
-@interface Lullaby : NSObject<LAListener, UIAlertViewDelegate> 
-{} 
--(void)stopMusic;
-@end
+@interface Lullaby : NSObject<LAListener, UIAlertViewDelegate> {
+@private 
+UIAlertView *av;
 
-UITextField* minutesField;
-NSString* minutes = @"";
+} 
+@end
 
 @implementation Lullaby
 
--(void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event {
-	UIAlertView* askAlert = [[UIAlertView alloc] initWithTitle:@"Lullaby" message:@"Enter the number of minutes until your music should stop playing" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
-	[askAlert setAlertViewStyle:UIAlertViewStylePlainTextInput];
-	minutesField = [askAlert textFieldAtIndex:0];
-	//[askAlert textFieldAtIndex:0].autocapitalizationType = UITextAutocapitalizationTypeSentences;
-	minutesField.autocorrectionType = UITextAutocorrectionTypeNo;
-	minutesField.enablesReturnKeyAutomatically = YES;
-	[minutesField setPlaceholder:@"15 minutes"];
-	[askAlert show];
+- (BOOL)dismiss {
+	// Ensures alert view is dismissed
+	// Returns YES if alert was visible previously
+	if (av) {
+		[av dismissWithClickedButtonIndex:[av cancelButtonIndex] animated:YES];
+		[av release];
+		av = nil;
+		return YES;
+	}
+	return NO;
 }
+
+- (void)activator:(LAActivator *)activator abortEvent:(LAEvent *)event {
+	[self dismiss];
+}
+
+- (void)activator:(LAActivator *)activator otherListenerDidHandleEvent:(LAEvent *)event {
+	[self dismiss];
+}
+
+
+- (void)activator:(LAActivator *)activator receiveDeactivateEvent:(LAEvent *)event {
+	if ([self dismiss])
+		[event setHandled:YES];
+}
+
+
+-(void)activator:(LAActivator *)activator receiveEvent:(LAEvent *)event {
+	if (![self dismiss]) { 
+	  av = [[UIAlertView alloc] initWithTitle:@"Lullaby" message:@"Enter the number of minutes until your music should stop playing" delegate:self cancelButtonTitle:@"Cancel" otherButtonTitles:@"Ok", nil];
+	[av setAlertViewStyle:UIAlertViewStylePlainTextInput];
+	UITextField *avField = [av textFieldAtIndex:0];
+	[avField setKeyboardType:UIKeyboardTypeNumberPad];
+	avField.autocorrectionType = UITextAutocorrectionTypeNo;
+	avField.enablesReturnKeyAutomatically = YES;
+	[avField setPlaceholder:@"15"];
+	[av show];
+
+      }
+}
+
+- (void)alertView:(UIAlertView *)alertView willDismissWithButtonIndex:(NSInteger)buttonIndex {
+	[av release];
+	av = nil;
+}
+
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-	if (buttonIndex != [alertView cancelButtonIndex]) {
-		minutes = @"";
-		NSString* result = @"";
-		minutes = (NSString*)minutesField.text;
-		//for (NSString* inChar in minutes) {
-		for (int i = 0; i < [minutes length]; i++) {
-			NSString* inChar = [minutes substringWithRange:NSMakeRange(i, 1)];
-			if ([inChar isEqualToString:@"0"] || [inChar isEqualToString:@"1"] || [inChar isEqualToString:@"2"] || [inChar isEqualToString:@"3"] || [inChar isEqualToString:@"4"] || [inChar isEqualToString:@"5"] || [inChar isEqualToString:@"6"] || [inChar isEqualToString:@"7"] || [inChar isEqualToString:@"8"] || [inChar isEqualToString:@"9"]) {
-				result = [result stringByAppendingString:inChar];
-			}
-			else {
-			}
-		}
-		if (result == nil || [result isEqualToString:@""]) {
-			UIAlertView* badInputAlert = [[UIAlertView alloc] initWithTitle:@"Lullaby" message:@"Please enter a valid number of minutes." delegate:nil cancelButtonTitle:@"Ok" otherButtonTitles:nil];
-			[badInputAlert show];
-		}
-		else {
-			int fadeTime = [result intValue] * 60;
-			NSTimer* timer = [NSTimer scheduledTimerWithTimeInterval:fadeTime target:self selector:@selector(stopMusic) userInfo:nil repeats:NO];
-		}
+	if (buttonIndex == [alertView cancelButtonIndex]) {
+	  return;      
 	}
+
+       int minutes = [[alertView textFieldAtIndex:0].text intValue];
+
+       dispatch_after(dispatch_time(DISPATCH_TIME_NOW,NSEC_PER_SEC * (minutes * 60)),dispatch_get_main_queue(), ^{
+	   [((SBMediaController *)[%c(SBMediaController) sharedInstance]) pause];
+       });
 }
 
--(void)stopMusic {
-	[[%c(SBMediaController) sharedInstance] pause];
+-(void)dealloc {
+
+[av release];
+[super dealloc];
+
 }
 
 +(void)load {
