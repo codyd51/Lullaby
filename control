@@ -1,6 +1,7 @@
 Package: com.phillip.lullaby
 Name: Lullaby
 Depends: mobilesubstrate, libactivator
+Icon: Lullaby.png
 Version: 1.0
 Architecture: iphoneos-arm
 Description: Stop your music after you've fallen asleep
